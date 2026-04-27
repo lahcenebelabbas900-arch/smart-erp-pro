@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/api/wp/(.*)", "destination": "/api/wp?_path=$1" },
+    { "source": "/api/wp",      "destination": "/api/wp" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
+        { "key": "Access-Control-Allow-Headers", "value": "Authorization, Content-Type, x-wp-site" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, PATCH, DELETE, OPTIONS" }
+      ]
+    }
+  ]
+}

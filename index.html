@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Smart ERP Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;
+  --surface:#ffffff;
+  --surface2:#f8fafc;
+  --border:#e2e8f0;
+  --border2:#cbd5e1;
+  --text:#0f172a;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --blue:#2563eb;
+  --blue-d:#1d4ed8;
+  --blue-light:#dbeafe;
+  --green:#059669;
+  --green-light:#d1fae5;
+  --red:#dc2626;
+  --red-light:#fee2e2;
+  --yellow:#d97706;
+  --yellow-light:#fef3c7;
+  --purple:#7c3aed;
+  --purple-light:#ede9fe;
+  --indigo:#4338ca;
+  --indigo-light:#e0e7ff;
+  --gray:#64748b;
+  --gray-light:#f1f5f9;
+  --teal:#0d9488;
+  --teal-light:#ccfbf1;
+  --sky:#0284c7;
+  --sky-light:#e0f2fe;
+  --orange:#ea580c;
+  --orange-light:#fed7aa;
+  --r:14px;--r2:10px;--r3:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow2:0 4px 16px rgba(0,0,0,.10);
+  --shadow3:0 20px 48px rgba(0,0,0,.16);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;direction:rtl;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+#app{height:100dvh;display:flex;flex-direction:column;overflow:hidden;max-width:480px;margin:0 auto;background:var(--bg)}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.on{display:flex}
+/* يضمن ظهور صفحة الدخول قبل تشغيل JS — تُزال بـ JS بعد التحميل */
+body:not(.app-ready) #s-login{display:flex}
+body.app-ready #s-login{display:none}
+body.app-ready #s-login.on{display:flex}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.safe-top{padding-top:max(14px,env(safe-area-inset-top))}
+.safe-bottom{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--r2);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:active{transform:scale(.95)}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)}
+.btn-sm{padding:7px 13px;font-size:12px;border-radius:var(--r3)}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:6px}
+.btn-full{width:100%}
+.inp{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;padding:11px 14px;outline:none}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff}
+.inp-sm{padding:8px 11px;font-size:13px}
+.sel{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:9px 11px;outline:none;cursor:pointer}
+.sel:focus{border-color:var(--blue)}
+.spin{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(37,99,235,.2);border-top-color:var(--blue);border-radius:50%;animation:_spin .7s linear infinite}
+.spin-white{border-color:rgba(255,255,255,.3);border-top-color:#fff}
+@keyframes _spin{to{transform:rotate(360deg)}}
+@keyframes _up{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes _fade{from{opacity:0}to{opacity:1}}
+@keyframes _pulse{0%,100%{opacity:1}50%{opacity:.45}}
+#toasts{position:fixed;top:max(16px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;min-width:220px}
+.toast{background:#1e293b;color:#f1f5f9;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;animation:_toast-in .3s ease,_toast-out .3s ease 2.7s forwards}
+.toast.ok{background:#064e3b;border:1px solid #059669}
+.toast.err{background:#450a0a;border:1px solid #dc2626}
+.toast.warn{background:#451a03;border:1px solid #d97706}
+@keyframes _toast-in{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes _toast-out{to{opacity:0;transform:translateY(-8px)}}
+
+/* Login */
+#s-login{background:linear-gradient(160deg,#eff6ff 0%,#f8fafc 50%,#ecfdf5 100%);justify-content:center;align-items:center;padding:24px;overflow-y:auto}
+.login-wrap{width:100%;max-width:400px}
+.login-brand{text-align:center;margin-bottom:28px}
+.login-icon{width:78px;height:78px;border-radius:22px;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 14px;box-shadow:0 8px 28px rgba(37,99,235,.38)}
+.login-title{font-size:25px;font-weight:900;color:var(--text)}
+.login-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.login-card{background:#fff;border-radius:20px;border:1px solid var(--border);padding:24px;box-shadow:var(--shadow2)}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:20px;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:8px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;border:none;cursor:pointer;color:var(--text3);background:none}
+.auth-tab.active{background:#fff;color:var(--blue);box-shadow:var(--shadow)}
+.f-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.f-label{font-size:12px;font-weight:700;color:var(--text2)}
+.f-hint{font-size:11px;color:var(--text3)}
+.login-btn{width:100%;padding:13px;font-size:15px;border-radius:12px;margin-top:6px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;cursor:pointer;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:disabled{opacity:.6}
+.login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--text3)}
+
+/* Main */
+#s-main{overflow:hidden}
+.main-body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tab-page{display:none;flex-direction:column;height:100%;overflow:hidden}
+.tab-page.on{display:flex}
+.bnav{display:flex;background:#fff;border-top:1px solid var(--border);flex-shrink:0;padding:0 2px}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;background:none;border:none;cursor:pointer;position:relative}
+.bnav-btn .ni{font-size:21px}
+.bnav-btn .nl{font-size:10px;font-weight:700;color:var(--text3)}
+.bnav-btn.on .nl{color:var(--blue)}
+.bnav-dot{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:3.5px;border-radius:3px;background:var(--blue);opacity:0}
+.bnav-btn.on .bnav-dot{opacity:1}
+.ph{background:#fff;border-bottom:1px solid var(--border);padding:14px 16px 0;flex-shrink:0}
+.ph-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ph-left{display:flex;align-items:center;gap:10px}
+.ph-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.ph-title{font-size:18px;font-weight:800}
+.ph-sub{font-size:12px;color:var(--text3)}
+.ph-actions{display:flex;gap:8px}
+.ph-btn{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.tstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}
+.tstrip::-webkit-scrollbar{display:none}
+.tchip{flex-shrink:0;padding:6px 13px;border-radius:20px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.tchip.on{color:#fff;border-color:transparent}
+.tchip .tchip-count{background:rgba(255,255,255,.25);border-radius:10px;padding:1px 6px;font-size:10px}
+.srow{padding-bottom:12px}
+.swrap{position:relative}
+.sico{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px}
+.sinp{border-radius:22px!important;padding-right:38px!important}
+.olist{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:64px 20px;margin:auto;text-align:center}
+.empty-ico{font-size:52px;opacity:.35}
+.empty-txt{font-size:14px;color:var(--text3);font-weight:600}
+.loading-center{display:flex;flex-direction:column;align-items:center;gap:10px;padding:50px;margin:auto}
+.loading-txt{font-size:13px;color:var(--text3);font-weight:600}
+
+/* Order Card */
+.ocard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;box-shadow:var(--shadow)}
+.ocard:active{transform:scale(.985)}
+.oc-head{display:flex;justify-content:space-between;margin-bottom:9px}
+.oc-id{font-size:14px;font-weight:800}
+.oc-total{font-size:15px;font-weight:900}
+.oc-cust{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.oc-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff}
+.oc-name{font-size:13px;font-weight:700}
+.oc-phone{font-size:12px;color:var(--text2);direction:ltr}
+.oc-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.oc-date{font-size:11px;color:var(--text3)}
+.oc-badge{display:inline-flex;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700}
+.oc-wilaya{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:3px}
+.oc-track{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 7px}
+.pg{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0}
+
+/* Sheet / Overlay */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(3px)}
+.sheet{width:100%;max-height:94dvh;background:#fff;border-radius:22px 22px 0 0;border-top:1px solid var(--border);display:flex;flex-direction:column;animation:_up .3s cubic-bezier(.34,1.2,.64,1);max-width:480px;margin:0 auto}
+.sheet-handle{width:42px;height:5px;background:var(--border2);border-radius:5px;margin:12px auto 0}
+.sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border)}
+.sheet-id{font-size:19px;font-weight:900}
+.sheet-close{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sheet-body{flex:1;overflow-y:auto;padding:0 16px 28px}
+.sec{padding:16px 0;border-bottom:1px solid var(--border)}
+.sec:last-child{border-bottom:none}
+.sec-title{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;margin-bottom:11px}
+.ir{display:flex;justify-content:space-between;gap:12px;padding:6px 0}
+.ir-l{font-size:12px;color:var(--text3)}
+.ir-v{font-size:13px;font-weight:600;text-align:left}
+.cbts{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.ef-lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.ef-row{display:flex;gap:7px;margin-bottom:10px}
+.prow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.p-name{font-size:13px;font-weight:700}
+.p-qty{font-size:11px;color:var(--text3)}
+.p-price{font-size:14px;font-weight:800}
+.total-row{display:flex;justify-content:space-between;padding:10px 0}
+
+/* Shipping */
+.ship-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ship-btn{flex-direction:column;gap:4px;padding:11px 8px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;transition:all .2s}
+.ship-btn:hover{transform:translateY(-2px)}
+.ship-btn.picked{color:#fff;border-color:transparent!important}
+.ship-icon{font-size:22px}
+.act-row{display:flex;flex-wrap:wrap;gap:8px}
+.act-btn{flex:1;min-width:110px;padding:11px 14px;border-radius:12px;font-size:13px;border:none;cursor:pointer;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.act-btn:active{transform:scale(.95)}
+.note-area{resize:vertical;min-height:80px}
+.track-badge{display:inline-flex;align-items:center;gap:6px;background:var(--teal-light);border:1px solid var(--teal);border-radius:8px;padding:6px 11px;font-size:12px;margin-top:8px;width:100%;justify-content:space-between;color:var(--teal)}
+.ship-form-inner{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px;margin-top:10px}
+.ship-form-title{font-size:13px;font-weight:800;margin-bottom:10px}
+
+/* Send Shipping Full Form */
+.send-form{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:10px}
+.send-form-title{font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-full{grid-column:1/-1}
+
+/* Finance */
+.fin-body{flex:1;overflow-y:auto;padding:12px 13px 28px;display:flex;flex-direction:column;gap:11px}
+.big-card{border-radius:18px;padding:20px;position:relative;overflow:hidden}
+.bc-lbl{font-size:12px;color:rgba(255,255,255,.75);font-weight:600}
+.bc-val{font-size:28px;font-weight:900;color:#fff;display:block}
+.bc-sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:4px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+.sc-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px}
+.sc-lbl{font-size:11px;color:var(--text3);font-weight:600}
+.sc-val{font-size:24px;font-weight:900;margin-top:2px}
+.period-row{display:flex;gap:7px;padding-bottom:12px}
+.prbtn{padding:6px 15px;border-radius:20px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer}
+.prbtn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Stock */
+.sklist{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.skcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:13px;display:flex;align-items:center;gap:11px}
+.sk-thumb{width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px}
+.sk-info{flex:1}
+.sk-name{font-size:13px;font-weight:700}
+.sk-sku{font-size:11px;color:var(--text3)}
+.sk-badge{padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700}
+.sk-edit{display:flex;gap:6px;margin-top:7px}
+.sk-input{width:72px;padding:7px;text-align:center;border-radius:8px;border:1.5px solid var(--blue);direction:ltr;font-family:'Cairo',sans-serif;font-size:14px;outline:none}
+
+/* Settings */
+.set-body{flex:1;overflow-y:auto;padding:0 13px 36px}
+.set-sec{padding-top:20px;border-bottom:1px solid var(--border);padding-bottom:16px}
+.set-sec:last-child{border-bottom:none}
+.set-title{font-size:11px;font-weight:800;color:var(--text3);margin-bottom:13px;text-transform:uppercase}
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-lbl{font-size:13px;color:var(--text2)}
+.set-val{font-size:13px;font-weight:700;direction:ltr;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;margin-bottom:8px;overflow:hidden}
+.co-hd{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:none;border:none;cursor:pointer}
+.co-left{display:flex;align-items:center;gap:10px}
+.co-ico{font-size:24px}
+.co-name{font-size:14px;font-weight:700}
+.co-st{font-size:11px}
+.co-fields{padding:0 14px 14px;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--border)}
+.app-card{border-radius:18px;background:linear-gradient(135deg,#eff6ff,#ecfdf5);border:1px solid var(--border);padding:22px;text-align:center;margin-top:16px}
+.app-logo{font-size:32px;margin-bottom:6px}
+.app-name{font-size:16px;font-weight:900}
+.app-ver{font-size:12px;color:var(--text3);margin-top:2px}
+.app-desc{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7}
+.conn-badge{padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700}
+
+/* Debug panel */
+.debug-banner{background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:10px 13px;font-size:12px;color:#92400e;margin:8px 0;display:flex;align-items:flex-start;gap:8px}
+</style>
+</head>
+<body>
+<div id="app"><div id="toasts"></div>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen safe-top safe-bottom">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="login-icon">⚡</div>
+      <div class="login-title">Smart ERP Pro</div>
+      <div class="login-sub">إدارة الطلبيات الذكية — WooCommerce + Smart ERP</div>
+    </div>
+    <div class="login-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-basic" onclick="setAuthMode('basic')">🔑 App Password</button>
+        <button class="auth-tab" id="tab-ck" onclick="setAuthMode('ck')">🔐 Consumer Key</button>
+      </div>
+      <div class="f-group">
+        <label class="f-label">🌐 رابط الموقع</label>
+        <input class="inp" id="in-url" type="url" placeholder="https://yoursite.com" dir="ltr">
+      </div>
+      <div id="fields-basic">
+        <div class="f-group">
+          <label class="f-label">👤 اسم المستخدم</label>
+          <input class="inp" id="in-user" type="text" placeholder="admin" dir="ltr">
+        </div>
+        <div class="f-group">
+          <label class="f-label">🔑 كلمة مرور التطبيق</label>
+          <input class="inp" id="in-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" dir="ltr">
+          <div class="f-hint">WordPress › المستخدمون › ملفك الشخصي › كلمات مرور التطبيق</div>
+        </div>
+      </div>
+      <div id="fields-ck" style="display:none">
+        <div class="f-group">
+          <label class="f-label">🗝️ Consumer Key</label>
+          <input class="inp" id="in-ck" type="text" placeholder="ck_xxxxxxxxxxxxxxxx" dir="ltr">
+        </div>
+        <div class="f-group">
+          <label class="f-label">🔒 Consumer Secret</label>
+          <input class="inp" id="in-cs" type="password" placeholder="cs_xxxxxxxxxxxxxxxx" dir="ltr">
+          <div class="f-hint">WooCommerce › الإعدادات › متقدم › REST API</div>
+        </div>
+      </div>
+      <button class="login-btn" id="btn-login" onclick="doLogin()">🔐 تسجيل الدخول</button>
+    </div>
+    <div class="login-footer">Smart ERP Pro v3.3 · متوافق مع Smart Service ERP v9</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="s-main" class="screen">
+  <div class="main-body">
+    <!-- ORDERS TAB -->
+    <div id="pg-orders" class="tab-page on">
+      <div class="ph safe-top">
+        <div class="ph-top">
+          <div class="ph-left">
+            <div class="ph-ico" id="ph-ico" style="background:#fef3c7">🆕</div>
+            <div>
+              <div class="ph-title" id="ph-title">جديدة</div>
+              <div class="ph-sub" id="ph-sub">— طلب</div>
+            </div>
+          </div>
+          <div class="ph-actions">
+            <div class="ph-btn" onclick="loadOrders()" title="تحديث">🔄</div>
+            <div class="ph-btn" onclick="toggleDebug()" title="Debug" id="debug-btn">🔍</div>
+          </div>
+        </div>
+        <div class="tstrip" id="tstrip"></div>
+        <div class="srow">
+          <div class="swrap">
+            <span class="sico">🔍</span>
+            <input class="inp sinp" id="srch" type="search" placeholder="بحث — اسم، رقم طلب، هاتف..." oninput="onSearch(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="olist" id="olist"></div>
+    </div>
+
+    <!-- FINANCE TAB -->
+    <div id="pg-finance" class="tab-page">
+      <div class="ph safe-top">
+        <div class="ph-top">
+          <div class="ph-left">
+            <div class="ph-ico" style="background:#fef3c7">💰</div>
+            <div>
+              <div class="ph-title">Finance ERP</div>
+              <div class="ph-sub" id="fin-sub-lbl">هذا الشهر</div>
+            </div>
+          </div>
+        </div>
+        <div class="period-row">
+          <button class="prbtn" onclick="setFin('today',this)">اليوم</button>
+          <button class="prbtn on" onclick="setFin('month',this)">الشهر</button>
+          <button class="prbtn" onclick="setFin('week',this)">أسبوع</button>
+        </div>
+      </div>
+      <div class="fin-body" id="fin-body">
+        <div class="loading-center"><div class="spin"></div><div class="loading-txt">جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- STOCK TAB -->
+    <div id="pg-stock" class="tab-page">
+      <div class="ph safe-top">
+        <div class="ph-top">
+          <div class="ph-left">
+            <div class="ph-ico" style="background:#ccfbf1">📦</div>
+            <div>
+              <div class="ph-title">Stock ERP</div>
+              <div class="ph-sub" id="sk-sub">— منتج</div>
+            </div>
+          </div>
+          <div class="ph-actions">
+            <div class="ph-btn" onclick="loadStock()">🔄</div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="swrap">
+            <span class="sico">🔍</span>
+            <input class="inp sinp" id="sk-srch" type="search" placeholder="بحث في المنتجات..." oninput="onSkSearch(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="sklist" id="sklist"></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="pg-settings" class="tab-page">
+      <div class="ph safe-top">
+        <div class="ph-top">
+          <div class="ph-left">
+            <div class="ph-ico" style="background:#f1f5f9">⚙️</div>
+            <div><div class="ph-title">الإعدادات</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="set-body" id="set-body"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bnav safe-bottom">
+    <button class="bnav-btn on" onclick="goTab('orders',this)"><div class="bnav-dot"></div><span class="ni">📋</span><span class="nl">الطلبيات</span></button>
+    <button class="bnav-btn" onclick="goTab('finance',this)"><div class="bnav-dot"></div><span class="ni">💰</span><span class="nl">Finance</span></button>
+    <button class="bnav-btn" onclick="goTab('stock',this)"><div class="bnav-dot"></div><span class="ni">📦</span><span class="nl">Stock</span></button>
+    <button class="bnav-btn" onclick="goTab('settings',this)"><div class="bnav-dot"></div><span class="ni">⚙️</span><span class="nl">إعدادات</span></button>
+  </div>
+</div>
+
+<!-- Order Detail Sheet -->
+<div id="overlay" class="overlay" style="display:none" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hd">
+      <div>
+        <div class="sheet-id" id="sh-id"></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="sh-status"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:18px;font-weight:900" id="sh-total"></div>
+        <button class="sheet-close" onclick="closeSheet()">✕</button>
+      </div>
+    </div>
+    <div class="sheet-body" id="sh-body"></div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+const S = {
+  url:'', user:'', pass:'', ck:'', cs:'', mode:'basic',
+  tab:'management', orders:[], total:0, pages:1, page:1, debugMode:false,
+  q:'', loading:false, products:[], skQ:'', finPeriod:'month',
+  shipCos:{}, pluginShips:[], nonce:'', statusCounts:{}, selShip:null
+};
+
+// =====================================================================
+// TABS CONFIG — مطابق للإضافة
+// =====================================================================
+const TABS = [
+  {id:'management', label:'الكل',         ico:'🔧', color:'#0284c7', bg:'#e0f2fe', erp:['all']},
+  {id:'pending',    label:'جديدة',       ico:'🆕', color:'#d97706', bg:'#fef3c7', erp:['pending']},
+  {id:'confirmed',  label:'مؤكدة',        ico:'✅', color:'#1d4ed8', bg:'#dbeafe', erp:['confirmed']},
+  {id:'on_the_way', label:'في الطريق',   ico:'🚚', color:'#7c3aed', bg:'#ede9fe', erp:['on_the_way']},
+  {id:'delivered',  label:'مسلمة',        ico:'🎯', color:'#047857', bg:'#d1fae5', erp:['delivered']},
+  {id:'cancelled',  label:'ملغات',        ico:'❌', color:'#64748b', bg:'#f1f5f9', erp:['cancelled']},
+  {id:'returned',   label:'روتور',        ico:'🔄', color:'#4338ca', bg:'#e0e7ff', erp:['returned']},
+  {id:'no_answer1', label:'لايرد 1',      ico:'📵', color:'#b45309', bg:'#fef3c7', erp:['no_answer1']},
+  {id:'no_answer2', label:'لايرد 2',      ico:'📵', color:'#b45309', bg:'#fef3c7', erp:['no_answer2']},
+  {id:'no_answer3', label:'لايرد 3',      ico:'📵', color:'#92400e', bg:'#fef3c7', erp:['no_answer3']},
+  {id:'failed',     label:'فشل الشحن',   ico:'❗', color:'#dc2626', bg:'#fee2e2', erp:['failed']}
+];
+
+const STATUS_META = {
+  management: {label:'🔧 الكل',           color:'#0284c7', bg:'#e0f2fe'},
+  pending:    {label:'🆕 جديدة',        color:'#d97706', bg:'#fef3c7'},
+  confirmed:  {label:'✅ مؤكدة',         color:'#1d4ed8', bg:'#dbeafe'},
+  on_the_way: {label:'🚚 في الطريق',    color:'#7c3aed', bg:'#ede9fe'},
+  delivered:  {label:'🎯 مسلمة',         color:'#047857', bg:'#d1fae5'},
+  cancelled:  {label:'❌ ملغاة',          color:'#64748b', bg:'#f1f5f9'},
+  returned:   {label:'🔄 روتور',          color:'#4338ca', bg:'#e0e7ff'},
+  no_answer1: {label:'📵 لايرد 1',       color:'#b45309', bg:'#fef3c7'},
+  no_answer2: {label:'📵 لايرد 2',       color:'#b45309', bg:'#fef3c7'},
+  no_answer3: {label:'📵 لايرد 3',       color:'#92400e', bg:'#fef3c7'},
+  failed:     {label:'❗ فشل الشحن',     color:'#dc2626', bg:'#fee2e2'}
+};
+
+const STATUS_ACTIONS = {
+  management: [{s:'confirmed',lbl:'تأكيد',ico:'✅',c:'#1d4ed8'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}],
+  pending:    [{s:'confirmed',lbl:'تأكيد',ico:'✅',c:'#1d4ed8'},{s:'no_answer1',lbl:'لايرد 1',ico:'📵',c:'#b45309'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}],
+  confirmed:  [{s:'on_the_way',lbl:'إرسال للشحن',ico:'🚚',c:'#7c3aed',ship:true},{s:'no_answer1',lbl:'لايرد 1',ico:'📵',c:'#b45309'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}],
+  on_the_way: [{s:'delivered',lbl:'مُسلّم',ico:'🎯',c:'#047857'},{s:'returned',lbl:'روتور',ico:'🔄',c:'#4338ca'},{s:'failed',lbl:'فشل الشحن',ico:'❗',c:'#dc2626'}],
+  delivered:  [{s:'returned',lbl:'روتور',ico:'🔄',c:'#4338ca'}],
+  cancelled:  [{s:'confirmed',lbl:'إعادة تأكيد',ico:'✅',c:'#1d4ed8'}],
+  returned:   [{s:'confirmed',lbl:'إعادة تأكيد',ico:'✅',c:'#1d4ed8'},{s:'cancelled',lbl:'إلغاء نهائي',ico:'❌',c:'#64748b'}],
+  no_answer1: [{s:'confirmed',lbl:'تأكيد',ico:'✅',c:'#1d4ed8'},{s:'no_answer2',lbl:'لايرد 2',ico:'📵',c:'#b45309'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}],
+  no_answer2: [{s:'confirmed',lbl:'تأكيد',ico:'✅',c:'#1d4ed8'},{s:'no_answer3',lbl:'لايرد 3',ico:'📵',c:'#92400e'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}],
+  no_answer3: [{s:'confirmed',lbl:'تأكيد',ico:'✅',c:'#1d4ed8'},{s:'cancelled',lbl:'إلغاء نهائي',ico:'❌',c:'#64748b'}],
+  failed:     [{s:'on_the_way',lbl:'إعادة شحن',ico:'🚚',c:'#7c3aed',ship:true},{s:'returned',lbl:'روتور',ico:'🔄',c:'#4338ca'},{s:'cancelled',lbl:'إلغاء',ico:'❌',c:'#64748b'}]
+};
+
+const BUILTIN_SHIPS = [
+  {id:'zr',    name:'ZR Express', ico:'🟣', c:'#7c3aed', fields:['secret_key','tenant_id']},
+  {id:'noest', name:'Noest',      ico:'🔵', c:'#0284c7', fields:['api_token','user_guid']}
+];
+
+// =====================================================================
+// STORAGE
+// =====================================================================
+function save(){try{localStorage.setItem('erp_v33',JSON.stringify({url:S.url,user:S.user,pass:S.pass,ck:S.ck,cs:S.cs,mode:S.mode}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem('erp_v33')||localStorage.getItem('erp_v32')||'null');if(d&&d.url){Object.assign(S,d);return true}return false}catch(e){return false}}
+function saveCos(){try{localStorage.setItem('erp_cos_v2',JSON.stringify(S.shipCos))}catch(e){}}
+function loadCos(){try{const d=JSON.parse(localStorage.getItem('erp_cos_v2')||'null');if(d)S.shipCos=d}catch(e){}}
+
+// =====================================================================
+// TOAST
+// =====================================================================
+function toast(msg,type='ok'){
+  // تحويل أي نوع إلى نص مقروء
+  let txt;
+  if(msg===null||msg===undefined) txt='خطأ غير معروف';
+  else if(typeof msg==='string') txt=msg;
+  else if(msg instanceof Error) txt=msg.message||String(msg);
+  else if(typeof msg==='object'){
+    txt=msg.message||msg.error||msg.data?.message||msg.code||JSON.stringify(msg).substring(0,120);
+  }
+  else txt=String(msg);
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  el.innerHTML=(type==='ok'?'✅':type==='err'?'❌':'⚠️')+' '+txt;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// =====================================================================
+// AUTH
+// =====================================================================
+function setAuthMode(m){
+  S.mode=m;
+  document.getElementById('tab-basic').classList.toggle('active',m==='basic');
+  document.getElementById('tab-ck').classList.toggle('active',m==='ck');
+  document.getElementById('fields-basic').style.display=m==='basic'?'':'none';
+  document.getElementById('fields-ck').style.display=m==='ck'?'':'none';
+}
+function apiUser(){return S.mode==='ck'?S.ck:S.user}
+function apiPass(){return S.mode==='ck'?S.cs:S.pass}
+function authHeader(){try{return 'Basic '+btoa(unescape(encodeURIComponent(apiUser()+':'+apiPass())));}catch(e){return 'Basic '+btoa(apiUser()+':'+apiPass());}}
+function jsonHeaders(){return {Authorization:authHeader(),'Content-Type':'application/json'}}
+
+// =====================================================================
+// API FETCH — اتصال مباشر بـ WordPress
+// =====================================================================
+async function apiFetch(urlOrPath, opts={}){
+  const PROXY = '/api/wp';
+  const isLocal = location.hostname === 'localhost' || location.protocol === 'file:';
+
+  // حدد المسار النسبي
+  let path;
+  if(typeof urlOrPath === 'string' && urlOrPath.startsWith('http')){
+    try{
+      const u = new URL(urlOrPath);
+      path = u.pathname + u.search;
+    } catch(e){ path = urlOrPath; }
+  } else {
+    path = urlOrPath;
+  }
+
+  let finalUrl, finalOpts;
+  if(!isLocal){
+    // في Netlify: مرر عبر الـ proxy مع x-wp-site header
+    finalUrl = PROXY + path;
+    finalOpts = {
+      ...opts,
+      headers: { ...(opts.headers||{}), 'x-wp-site': S.url }
+    };
+  } else {
+    // في localhost: اتصل مباشرة
+    finalUrl = S.url + path;
+    finalOpts = opts;
+  }
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const r = await fetch(finalUrl, { ...finalOpts, signal: ctrl.signal });
+    clearTimeout(t);
+    return r;
+  } catch(e){
+    clearTimeout(t);
+    throw e;
+  }
+}
+
+// =====================================================================
+// WC / ERP API HELPERS
+// =====================================================================
+async function wcGet(path, params={}){
+  const parts = [];
+  // إذا Consumer Key — أضفه في الـ URL مباشرة (أضمن مع proxy)
+  if(S.mode==='ck' && S.ck && S.cs){
+    parts.push('consumer_key='+encodeURIComponent(S.ck));
+    parts.push('consumer_secret='+encodeURIComponent(S.cs));
+  }
+  Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!=='')parts.push(encodeURIComponent(k)+'='+encodeURIComponent(v));});
+  const qs = parts.length ? '?'+parts.join('&') : '';
+  const apiPath = '/wp-json/wc/v3' + path + qs;
+
+  // ✅ إصلاح: إرسال CK/CS أيضاً عبر Authorization header (Basic Auth) — يضمن العمل مع جميع إعدادات الخادم
+  const headers = S.mode==='ck' && S.ck && S.cs
+    ? {'Content-Type':'application/json', 'Authorization':(()=>{try{return 'Basic '+btoa(unescape(encodeURIComponent(S.ck+':'+S.cs)));}catch(e){return 'Basic '+btoa(S.ck+':'+S.cs);}})()}
+    : jsonHeaders();
+  const r = await apiFetch(apiPath, {headers});
+  if(!r.ok) {
+    let errMsg = 'HTTP '+r.status;
+    try{
+      const txt=await r.text();
+      try{
+        const j=JSON.parse(txt);
+        // إذا رجع error من الـ proxy نفسه
+        if(j.error) errMsg = 'Proxy: '+j.error+(j.code?' ('+j.code+')':'');
+        else errMsg = j.message||j.error||j.code||('HTTP '+r.status+': '+txt.substring(0,120));
+      }
+      catch(e){errMsg='HTTP '+r.status+' | '+txt.substring(0,120);}
+    }catch(e){}
+    throw new Error(errMsg);
+  }
+  const d = await r.json();
+  return {data:d, total:+(r.headers.get('x-wp-total')||0), pages:+(r.headers.get('x-wp-totalpages')||1)};
+}
+
+async function wcPut(path, body){
+  let qs = '';
+  if(S.mode==='ck' && S.ck && S.cs) qs='?consumer_key='+encodeURIComponent(S.ck)+'&consumer_secret='+encodeURIComponent(S.cs);
+  // ✅ إصلاح: إرسال Authorization header أيضاً في وضع CK
+  const headers = S.mode==='ck' && S.ck && S.cs
+    ? {'Content-Type':'application/json', 'Authorization':(()=>{try{return 'Basic '+btoa(unescape(encodeURIComponent(S.ck+':'+S.cs)));}catch(e){return 'Basic '+btoa(S.ck+':'+S.cs);}})()}
+    : jsonHeaders();
+  const r = await apiFetch('/wp-json/wc/v3'+path+qs, {method:'PUT', headers, body:JSON.stringify(body)});
+  if(!r.ok){let m='HTTP '+r.status;try{const j=await r.json();m=j.message||m;}catch(e){}throw new Error(m);}
+  return r.json();
+}
+
+async function wcPost(path, body){
+  let qs = '';
+  if(S.mode==='ck' && S.ck && S.cs) qs='?consumer_key='+encodeURIComponent(S.ck)+'&consumer_secret='+encodeURIComponent(S.cs);
+  // ✅ إصلاح: إرسال Authorization header أيضاً في وضع CK
+  const headers = S.mode==='ck' && S.ck && S.cs
+    ? {'Content-Type':'application/json', 'Authorization':(()=>{try{return 'Basic '+btoa(unescape(encodeURIComponent(S.ck+':'+S.cs)));}catch(e){return 'Basic '+btoa(S.ck+':'+S.cs);}})()}
+    : jsonHeaders();
+  const r = await apiFetch('/wp-json/wc/v3'+path+qs, {method:'POST', headers, body:JSON.stringify(body)});
+  if(!r.ok){let m='HTTP '+r.status;try{const j=await r.json();m=j.message||m;}catch(e){}throw new Error(m);}
+  return r.json();
+}
+
+function toUrlEncoded(obj){
+  const p=[];
+  function add(k,v){p.push(encodeURIComponent(k)+'='+encodeURIComponent(v??''));}
+  for(const[k,v]of Object.entries(obj)){
+    if(v!==null&&typeof v==='object'){for(const[k2,v2]of Object.entries(v))add(k+'['+k2+']',v2);}
+    else add(k,v);
+  }
+  return p.join('&');
+}
+
+async function erpAjax(action, data={}){
+  const formBody = {action};
+  if(S.nonce) formBody.nonce = S.nonce;
+  Object.assign(formBody, data);
+  const r = await apiFetch('/wp-admin/admin-ajax.php', {
+    method:'POST',
+    headers:{Authorization:authHeader(),'Content-Type':'application/x-www-form-urlencoded'},
+    body:toUrlEncoded(formBody)
+  });
+  const txt = await r.text();
+  // ===== إصلاح Unexpected token =====
+  // إذا الرد HTML فهذا يعني مشكلة في الـ proxy أو الإضافة
+  if(txt.trim().startsWith('<')){
+    throw new Error('الخادم أرجع HTML — تحقق من تفعيل إضافة Smart Service ERP');
+  }
+  let json;
+  try{json = JSON.parse(txt);}
+  catch(e){throw new Error('رد غير صالح من الخادم: '+txt.substring(0,80));}
+  if(json.success===false){
+    const d = json.data;
+    let errMsg;
+    if(!d) errMsg='خطأ الإضافة';
+    else if(typeof d==='string') errMsg=d;
+    else if(typeof d==='object') errMsg=d.message||d.error||d.code||JSON.stringify(d).substring(0,120);
+    else errMsg=String(d);
+    throw new Error(errMsg);
+  }
+  return json.data;
+}
+
+async function fetchNonce(){
+  try{
+    const r = await apiFetch('/wp-admin/admin-ajax.php', {
+      method:'POST',
+      headers:{Authorization:authHeader(),'Content-Type':'application/x-www-form-urlencoded'},
+      body:'action=smart_get_nonce_for_app'
+    });
+    const txt = await r.text();
+    if(txt.trim().startsWith('<')) return; // HTML = إضافة غير مفعّلة
+    const j = JSON.parse(txt);
+    if(j?.nonce) S.nonce = j.nonce;
+    else if(j?.data?.nonce) S.nonce = j.data.nonce;
+  }catch(e){}
+}
+
+async function fetchPluginShips(){
+  try{
+    const d = await erpAjax('smart_shipping_get_companies');
+    if(Array.isArray(d)) S.pluginShips = d;
+  }catch(e){S.pluginShips=[];}
+}
+
+async function fetchStatusCounts(){
+  try{
+    const d = await erpAjax('smart_shipping_get_stats_counts');
+    if(d?.status_counts) S.statusCounts = d.status_counts;
+    else if(d && typeof d==='object') S.statusCounts = d;
+  }catch(e){
+    // Fallback: احسب الأعداد من WC REST API
+    try{
+      const statuses = ['pending','processing','on-hold','completed','cancelled','refunded','failed'];
+      const counts = {};
+      await Promise.allSettled(statuses.map(async st=>{
+        try{const r=await wcGet('/orders',{status:st,per_page:1});counts[st]=r.total||0;}catch(e2){}
+      }));
+      S.statusCounts = {
+        pending:    (counts.pending||0),
+        confirmed:  (counts.processing||0)+(counts['on-hold']||0),
+        on_the_way: 0,
+        delivered:  counts.completed||0,
+        cancelled:  counts.cancelled||0,
+        returned:   counts.refunded||0,
+        no_answer1: 0,
+        no_answer2: 0,
+        no_answer3: 0,
+        failed:     counts.failed||0,
+      };
+    }catch(e2){}
+  }
+}
+
+function getAllShips(){
+  const custom = (S.pluginShips||[]).map(c=>({
+    id:c.key||c.id, name:c.name, ico:c.icon||'🚚', c:c.color||'#6b7280',
+    fields:c.fields||['api_key'], isCustom:true
+  }));
+  const ids = new Set(custom.map(c=>c.id));
+  return [...BUILTIN_SHIPS.filter(b=>!ids.has(b.id)), ...custom];
+}
+
+// =====================================================================
+// DIAGNOSTIC
+// =====================================================================
+async function runDiag(){
+  const out = [];
+  const base = '/api/wp';
+  const auth = authHeader();
+  const site = S.url;
+
+  // اختبار 1: WC REST API orders
+  try{
+    const r = await fetch(base+'/wp-json/wc/v3/orders?per_page=1', {
+      headers:{'Authorization':auth,'Content-Type':'application/json','x-wp-site':site}
+    });
+    const txt = await r.text();
+    out.push('WC REST: HTTP '+r.status+' → '+txt.substring(0,200));
+  }catch(e){ out.push('WC REST ERROR: '+e.message); }
+
+  // اختبار 2: WC REST API مع consumer key في URL
+  if(S.ck && S.cs){
+    try{
+      const r = await fetch(base+'/wp-json/wc/v3/orders?per_page=1&consumer_key='+encodeURIComponent(S.ck)+'&consumer_secret='+encodeURIComponent(S.cs), {
+        headers:{'x-wp-site':site}
+      });
+      const txt = await r.text();
+      out.push('WC CK URL: HTTP '+r.status+' → '+txt.substring(0,200));
+    }catch(e){ out.push('WC CK ERROR: '+e.message); }
+  }
+
+  // اختبار 3: WP JSON index
+  try{
+    const r = await fetch(base+'/wp-json/', {
+      headers:{'Authorization':auth,'x-wp-site':site}
+    });
+    out.push('WP JSON index: HTTP '+r.status);
+  }catch(e){ out.push('WP JSON ERROR: '+e.message); }
+
+  alert(out.join('\n\n'));
+}
+
+// =====================================================================
+// LOGIN
+// =====================================================================
+async function doLogin(){
+  let raw = (document.getElementById('in-url').value||'').trim().replace(/\/+$/,'');
+  if(!raw){toast('أدخل رابط الموقع','err');return;}
+  if(!/^https?:\/\//i.test(raw)) raw = 'https://'+raw;
+  let u,p;
+  if(S.mode==='basic'){
+    u = document.getElementById('in-user').value.trim();
+    p = document.getElementById('in-pass').value.trim();
+    if(!u||!p){toast('أدخل اسم المستخدم وكلمة المرور','err');return;}
+  } else {
+    u = document.getElementById('in-ck').value.trim();
+    p = document.getElementById('in-cs').value.trim();
+    if(!u||!p){toast('أدخل Consumer Key و Secret','err');return;}
+  }
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spin spin-white"></span> جاري الاتصال...';
+  btn.disabled = true;
+  const prevUrl = S.url;
+  S.url = raw;
+
+  // ✅ btoa آمن يدعم كل الأحرف بما فيها العربية والرموز الخاصة
+  let auth;
+  try {
+    auth = 'Basic ' + btoa(unescape(encodeURIComponent(u + ':' + p)));
+  } catch(e) {
+    auth = 'Basic ' + btoa(u + ':' + p);
+  }
+  const isLocal = location.hostname==='localhost'||location.protocol==='file:';
+
+  // ===== خطوة 1: حاول ERP AJAX (الإضافة) أولاً =====
+  let erpOk = false;
+  try{
+    const erpUrl = '/api/wp/wp-admin/admin-ajax.php';
+    const erpR = await fetch(erpUrl, {
+      method:'POST',
+      headers:{Authorization:auth,'Content-Type':'application/x-www-form-urlencoded','x-wp-site':raw},
+      body:'action=smart_get_nonce_for_app',
+      signal: AbortSignal.timeout(10000)
+    });
+    const erpTxt = await erpR.text();
+    // إذا رجع JSON (حتى لو success: false) فمعناه الإضافة موجودة والاتصال يعمل
+    if(!erpTxt.trim().startsWith('<')){
+      try{JSON.parse(erpTxt); erpOk=true;}catch(e){}
+    }
+    // إذا 401 من ERP = بيانات خاطئة
+    if(erpR.status===401 || erpR.status===403){
+      toast('بيانات الدخول غير صحيحة ('+erpR.status+')','err');
+      S.url=prevUrl; btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false; return;
+    }
+  }catch(e){}
+
+  // ===== خطوة 2: إذا نجح ERP — دخول مباشر =====
+  if(erpOk){
+    if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
+    else{S.ck=u;S.cs=p;S.user='';S.pass='';}
+    save(); loadCos();
+    toast('تم الاتصال عبر الإضافة 🎉','ok');
+    btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
+    setTimeout(launchApp,400); return;
+  }
+
+  // ===== خطوة 3: Fallback — جرّب WC REST API مباشرة =====
+  try{
+    const testPath = '/wp-json/wc/v3/orders?per_page=1';
+    const testUrl = '/api/wp'+testPath;
+    const r = await fetch(testUrl, {
+      headers:{Authorization:auth,'Content-Type':'application/json','x-wp-site':raw},
+      signal: AbortSignal.timeout(12000)
+    });
+    if(r.ok || r.status===200){
+      if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
+      else{S.ck=u;S.cs=p;S.user='';S.pass='';}
+      save(); loadCos();
+      toast('تم الاتصال بنجاح 🎉','ok');
+      btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
+      setTimeout(launchApp,400); return;
+    } else if(r.status===401){
+      toast('بيانات الدخول غير صحيحة (401)','err');
+    } else if(r.status===404){
+      // WC REST غير مفعّل لكن ربما الموقع يعمل — ادخل وأظهر الطلبيات من AJAX
+      if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
+      else{S.ck=u;S.cs=p;S.user='';S.pass='';}
+      save(); loadCos();
+      toast('تم الاتصال — WC REST API غير مفعّل، يعمل بوضع الإضافة','warn');
+      btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
+      setTimeout(launchApp,400); return;
+    } else {
+      let errTxt = 'خطأ من الخادم: '+r.status;
+      try{const j=await r.json();if(j.error)errTxt=j.error;}catch(e){}
+      toast(errTxt,'err');
+    }
+  }catch(e){
+    // إذا فشل كل شيء بسبب شبكة — ادخل على أي حال إذا أُدخلت بيانات
+    if(e.name==='AbortError'){
+      toast('انتهت مهلة الاتصال','err');
+    } else {
+      toast('تعذّر الاتصال — تحقق من الرابط','err');
+    }
+  }
+  S.url = prevUrl;
+  btn.innerHTML='🔐 تسجيل الدخول';
+  btn.disabled=false;
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('s-login').classList.contains('on')) doLogin();
+});
+
+// =====================================================================
+// LAUNCH
+// =====================================================================
+async function launchApp(){
+  document.getElementById('s-login').classList.remove('on');
+  document.getElementById('s-main').classList.add('on');
+  buildStrip();
+  await fetchNonce();
+  await Promise.all([fetchPluginShips(), fetchStatusCounts()]);
+  buildStrip();
+  buildSettings();
+  loadOrders();
+}
+
+// =====================================================================
+// NAVIGATION
+// =====================================================================
+function goTab(name,btn){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  if(name==='finance') loadFinance();
+  if(name==='stock') loadStock();
+}
+
+// =====================================================================
+// STATUS STRIP
+// =====================================================================
+function toggleDebug(){
+  S.debugMode=!S.debugMode;
+  const btn=document.getElementById('debug-btn');
+  if(btn) btn.style.background=S.debugMode?'#fef3c7':'';
+  renderOrders(S.orders, TABS.find(x=>x.id===S.tab), S.total, S.pages, S.page);
+  if(S.debugMode) toast('وضع Debug مفعّل — تظهر conf_status على كل طلبية','warn');
+}
+
+function buildStrip(){
+  const counts = S.statusCounts;
+  document.getElementById('tstrip').innerHTML = TABS.map(t=>{
+    let cnt=0;
+    if(t.id==='management') cnt=Object.values(counts).reduce((a,b)=>a+(+b||0),0);
+    else t.erp.forEach(e=>cnt+=+(counts[e]||0));
+    const cntHtml = cnt>0 ? `<span class="tchip-count">${cnt}</span>` : '';
+    return `<button class="tchip ${S.tab===t.id?'on':''}" style="${S.tab===t.id?'background:'+t.color+';':''}" onclick="setTab('${t.id}')">${t.ico} ${t.label}${cntHtml}</button>`;
+  }).join('');
+}
+
+function setTab(id){
+  S.tab=id; S.page=1; S.q='';
+  const el=document.getElementById('srch');
+  if(el) el.value='';
+  buildStrip();
+  const t=TABS.find(x=>x.id===id);
+  if(t){
+    document.getElementById('ph-ico').textContent=t.ico;
+    document.getElementById('ph-ico').style.background=t.bg;
+    document.getElementById('ph-title').textContent=t.label;
+  }
+  loadOrders();
+}
+
+// =====================================================================
+// LOAD ORDERS
+// =====================================================================
+async function loadOrders(page=1){
+  if(S.loading) return;
+  S.loading=true;
+  S.page=page;
+  const list=document.getElementById('olist');
+  if(!list){S.loading=false;return;}
+  list.innerHTML='<div class="loading-center"><div class="spin"></div><div class="loading-txt">جاري تحميل الطلبيات...</div></div>';
+  const t=TABS.find(x=>x.id===S.tab);
+  let erpFailed = false, wcFailed = false;
+  try{
+    let orders,total,pages;
+
+    // ===== محاولة 1: إضافة Smart Service ERP =====
+    try{
+      const isAll = S.tab==='management';
+      const status = isAll?'all':(t?.erp?.length===1?t.erp[0]:t?.erp?.join(','));
+      const res = await erpAjax('smart_shipping_get_orders',{
+        status:status||'all', search:S.q||'', page, per_page:20
+      });
+      orders = res.orders||[];
+      // ✅ لا فلترة محلية — الإضافة AB.php هي المرجع وتُرجع الحالة الصحيحة مباشرة
+      total  = res.total||orders.length;
+      pages  = Math.ceil(total/20)||1;
+      if(res.status_counts){S.statusCounts=res.status_counts;buildStrip();}
+    } catch(pluginErr){
+      erpFailed = true;
+      console.warn('ERP AJAX failed:', pluginErr.message);
+
+      // ===== محاولة 2: WooCommerce REST API — فلترة بحالات WC المقابلة ثم فلترة محلية دقيقة =====
+      const isAllFb = S.tab==='management';
+      const statusArr = t?.erp||['pending'];
+      const wcStatusList = isAllFb ? [] : erpToWcStatuses(statusArr);
+      const wcParams = {page, per_page:100, search:S.q||undefined};
+      if(!isAllFb) wcParams.status = wcStatusList.join(',');
+      const res = await wcGet('/orders', wcParams);
+      const allOrders = res.data.map(o=>wcOrderToErp(o));
+      // فلترة محلية صارمة على conf_status فقط عند تبويب محدد
+      orders = isAllFb ? allOrders : allOrders.filter(o => statusArr.includes(o.conf_status));
+      total = orders.length;
+      pages = 1;
+    }
+
+    S.orders=orders; S.total=total; S.pages=pages;
+    document.getElementById('ph-sub').textContent=(total||0)+' طلب';
+
+    // إشعار في حالة الـ fallback
+    if(erpFailed && !wcFailed){
+      console.info('Using WC REST API fallback');
+    }
+
+    renderOrders(orders,t,total||0,pages||1,page);
+  }catch(e){
+    list.innerHTML=`<div class="empty"><span class="empty-ico">⚠️</span><span class="empty-txt" style="white-space:pre-line;text-align:right">${e.message}</span><button class="btn btn-blue btn-sm" onclick="loadOrders(1)" style="margin-top:12px">🔄 إعادة المحاولة</button></div>`;
+    toast('خطأ في جلب الطلبيات','err');
+  }
+  S.loading=false;
+}
+
+// =====================================================================
+// STATUS MAPPING
+// =====================================================================
+function erpToWcStatuses(erpArr){
+  const map={pending:['pending'],confirmed:['on-hold','processing'],delivered:['completed'],returned:['refunded'],cancelled:['cancelled'],failed:['failed'],on_the_way:['processing'],no_answer1:['pending'],no_answer2:['pending'],no_answer3:['pending']};
+  const result=new Set();
+  erpArr.forEach(e=>(map[e]||['pending']).forEach(s=>result.add(s)));
+  return [...result];
+}
+
+function wcOrderToErp(o){
+  const b=o.billing||{},sh=o.shipping||{},items=o.line_items||[],first=items[0];
+  const meta = o.meta_data||[];
+  const getMeta = k => meta.find(m=>m.key===k)?.value||'';
+  // الإضافة تحفظ الحالة الخاصة بها في _conf_status أو conf_status
+  const erpStatus = getMeta('_conf_status')||getMeta('conf_status')||wcStatusToErp(o.status);
+  return {
+    id:o.id,
+    nom:(b.first_name+' '+b.last_name).trim()||'عميل',
+    tel:b.phone||'',
+    wilaya:b.state||sh.state||'',
+    adresse:b.city||sh.city||'',
+    commune:b.address_1||sh.address_1||'',
+    produit:first?.name||'',
+    montant:parseFloat(o.total||0),
+    quantite:items.reduce((s,i)=>s+(i.quantity||1),0),
+    conf_status: erpStatus,
+    date:o.date_created||'',
+    currency:o.currency_symbol||'DA',
+    line_items:o.line_items||[],
+    wc_status:o.status,
+    tracking_number:getMeta('tracking_number'),
+    shipping_co:getMeta('shipping_company'),
+    poids:getMeta('weight')||0.5,
+    _wc:o
+  };
+}
+
+function wcStatusToErp(s){
+  // يطابق منطق AB.php بعد الإصلاح: processing و on-hold = confirmed
+  const map={'processing':'confirmed','on-hold':'confirmed','completed':'delivered','cancelled':'cancelled','failed':'failed','refunded':'returned'};
+  return map[s]||'pending';
+}
+
+function erpToWcStatus(s){
+  const map={pending:'pending',confirmed:'on-hold',delivered:'completed',returned:'refunded',cancelled:'cancelled',failed:'failed',on_the_way:'processing',no_answer1:'pending',no_answer2:'pending',no_answer3:'pending'};
+  return map[s]||'processing';
+}
+
+// =====================================================================
+// RENDER ORDERS
+// =====================================================================
+function renderOrders(orders,tab,total,pages,page){
+  const list=document.getElementById('olist');
+  if(!orders.length){
+    list.innerHTML='<div class="empty"><span class="empty-ico">📭</span><span class="empty-txt">لا توجد طلبيات في هذا التبويب</span></div>';
+    return;
+  }
+  list.innerHTML=orders.map(o=>ocardHTML(o,tab)).join('')+(pages>1?pgHTML(page,pages):'');
+}
+
+function ocardHTML(o,t){
+  const name=o.nom||'عميل', phone=o.tel||'';
+  const total=Math.round(parseFloat(o.montant||0)), cur=o.currency||'DA';
+  const dateStr=o.date?(new Date(o.date).toLocaleDateString('ar-DZ',{day:'numeric',month:'short'})):'—';
+  const items=o.quantite||1, c=t?.color||'#2563eb';
+  const track=o.tracking_number?`<span class="oc-track">📍 ${o.tracking_number}</span>`:'';
+  const wilaya=o.wilaya?`<span class="oc-wilaya">📍 ${o.wilaya}</span>`:'';
+  return `<div class="ocard" style="border-right:4px solid ${c}" onclick="openOrder(${o.id})">
+    <div class="oc-head"><span class="oc-id" style="color:${c}">#${o.id}</span><span class="oc-total" style="color:${c}">${total} ${cur}</span></div>
+    <div class="oc-cust"><div class="oc-ava" style="background:${c}">${name.charAt(0)}</div><div><div class="oc-name">${name}</div><div class="oc-phone" dir="ltr">${phone||'—'}</div></div></div>
+    <div class="oc-foot"><span class="oc-date">📅 ${dateStr}</span>${wilaya}<span style="font-size:11px;color:var(--text3)">🛍️ ${items} قطعة</span>${track}</div>
+  </div>`;
+}
+
+function pgHTML(p,pages){
+  return `<div class="pg">
+    <button class="btn btn-ghost btn-sm" ${p<=1?'disabled':''} onclick="loadOrders(${p-1})">‹ السابق</button>
+    <span style="font-size:13px;font-weight:700;color:var(--text2)">${p} / ${pages}</span>
+    <button class="btn btn-ghost btn-sm" ${p>=pages?'disabled':''} onclick="loadOrders(${p+1})">التالي ›</button>
+  </div>`;
+}
+
+let srchTimer=null;
+function onSearch(v){S.q=v;clearTimeout(srchTimer);srchTimer=setTimeout(()=>loadOrders(1),500);}
+
+// =====================================================================
+// OPEN ORDER DETAIL SHEET
+// =====================================================================
+async function openOrder(id){
+  const o=S.orders.find(x=>x.id===id);
+  if(!o) return;
+  const t=TABS.find(x=>x.id===S.tab);
+  const c=t?.color||'#2563eb';
+  const name=o.nom||'—', phone=o.tel||'';
+  const total=Math.round(parseFloat(o.montant||0)), cur=o.currency||'DA';
+  const acts=STATUS_ACTIONS[S.tab]||[];
+  const isShip=acts.some(a=>a.ship);
+  const stMeta=STATUS_META[S.tab]||{};
+
+  document.getElementById('sh-id').textContent='#'+o.id;
+  document.getElementById('sh-id').style.color=c;
+  document.getElementById('sh-status').innerHTML=`<span class="oc-badge" style="background:${stMeta.bg||c+'1a'};color:${stMeta.color||c}">${stMeta.label||o.conf_status}</span>`;
+  document.getElementById('sh-total').textContent=total+' '+cur;
+  document.getElementById('sh-total').style.color=c;
+
+  const items=o.line_items||[];
+
+  const trackHtml = o.tracking_number
+    ? `<div class="track-badge"><span>📍 رقم التتبع: <strong>${o.tracking_number}</strong></span><button class="btn btn-ghost btn-xs" onclick="navigator.clipboard?.writeText('${o.tracking_number}');toast('تم النسخ','ok')">نسخ</button></div>`
+    : (o.shipping_co?`<div style="font-size:12px;color:var(--text3);margin-top:6px">📦 شركة: ${o.shipping_co}</div>`:'');
+
+  const allShips = getAllShips();
+
+  // بناء نموذج الإرسال لشركة التوصيل
+  const shipSection = isShip ? `
+    <div class="sec" id="ship-sec">
+      <div class="sec-title">🚚 الإرسال لشركة التوصيل</div>
+      <div class="ship-grid">
+        ${allShips.map(co=>`<button class="ship-btn" id="sb-${co.id}" onclick="pickShip('${co.id}','${co.c}')" style="border-color:${co.c}33"><span class="ship-icon">${co.ico}</span><span style="color:${co.c};font-size:11px">${co.name}</span></button>`).join('')}
+      </div>
+      <div id="ship-form"></div>
+      <button class="btn btn-full btn-blue" style="margin-top:12px" onclick="doSendShip(${o.id})">📤 إرسال لشركة التوصيل</button>
+    </div>` : '';
+
+  document.getElementById('sh-body').innerHTML = `
+    <div class="sec">
+      <div class="sec-title">👤 معلومات العميل</div>
+      <div class="ir"><span class="ir-l">الاسم</span><span class="ir-v">${name}</span></div>
+      <div class="ir"><span class="ir-l">الهاتف</span><span class="ir-v" dir="ltr">${phone||'—'}</span></div>
+      <div class="ir"><span class="ir-l">الولاية</span><span class="ir-v">${o.wilaya||'—'}</span></div>
+      <div class="ir"><span class="ir-l">البلدية</span><span class="ir-v">${o.commune||o.adresse||'—'}</span></div>
+      ${o._wc?.billing?.email?`<div class="ir"><span class="ir-l">الإيميل</span><span class="ir-v" dir="ltr" style="font-size:12px">${o._wc.billing.email}</span></div>`:''}
+      ${trackHtml}
+      <div class="cbts">
+        <button class="btn btn-green btn-sm" onclick="tel('${phone}')" ${!phone?'disabled':''}>📞 اتصال</button>
+        <button class="btn btn-sm" style="background:#25D366;color:#fff" onclick="wa('${phone}')" ${!phone?'disabled':''}>💬 واتساب</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">✏️ تعديل بيانات الطلب</div>
+      <div class="ef-lbl">اسم العميل الكامل</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-name" value="${name.replace(/"/g,'&quot;')}" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'name')">💾</button>
+      </div>
+      <div class="ef-lbl">رقم الهاتف</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-phone" value="${phone}" dir="ltr" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'phone')">💾</button>
+      </div>
+      <div class="ef-lbl">الولاية</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-wilaya" value="${o.wilaya||''}" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'wilaya')">💾</button>
+      </div>
+      <div class="ef-lbl">البلدية / العنوان التفصيلي</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-addr" value="${(o.commune||o.adresse||'').replace(/"/g,'&quot;')}" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'addr')">💾</button>
+      </div>
+      <div class="ef-lbl">العنوان الكامل (شارع، حي...)</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-adresse" value="${(o.adresse||'').replace(/"/g,'&quot;')}" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'adresse')">💾</button>
+      </div>
+      <div class="ef-lbl">الوزن (كغ)</div>
+      <div class="ef-row">
+        <input class="inp inp-sm" id="ef-poids" value="${o.poids||0.5}" type="number" step="0.1" min="0.1" dir="ltr" style="flex:1">
+        <button class="btn btn-ghost btn-xs" onclick="saveField(${o.id},'poids')">💾</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">🛍️ المنتجات</div>
+      ${items.length ? items.map(item=>`
+        <div class="prow">
+          <div>
+            <div class="p-name">${item.name||o.produit||'منتج'}</div>
+            <div class="p-qty">الكمية: ${item.quantity||1} × ${parseFloat(item.price||0).toFixed(0)} ${cur}</div>
+          </div>
+          <div class="p-price" style="color:${c}">${parseFloat(item.total||0).toFixed(0)} ${cur}</div>
+        </div>`).join('') :
+        `<div class="prow"><div><div class="p-name">${o.produit||'—'}</div><div class="p-qty">الكمية: ${o.quantite||1}</div></div><div class="p-price" style="color:${c}">${total} ${cur}</div></div>`
+      }
+      <div class="total-row">
+        <span style="font-size:14px;font-weight:700;color:var(--text2)">المجموع الكلي</span>
+        <span style="font-size:19px;font-weight:900;color:${c}">${total} ${cur}</span>
+      </div>
+    </div>
+
+    ${shipSection}
+
+    ${acts.length ? `
+    <div class="sec">
+      <div class="sec-title">⚡ تغيير الحالة</div>
+      <div class="act-row">
+        ${acts.map(a=>`<button class="act-btn" style="background:${a.c}" onclick="chStat(${o.id},'${a.s}')">${a.ico} ${a.lbl}</button>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="sec">
+      <div class="sec-title">📝 إضافة ملاحظة</div>
+      <textarea class="inp note-area" id="note-inp" placeholder="أكتب ملاحظتك هنا..."></textarea>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="saveNote(${o.id})">💾 حفظ الملاحظة</button>
+    </div>
+    <div style="height:20px"></div>
+  `;
+
+  S.selShip=null;
+  document.getElementById('overlay').style.display='flex';
+}
+
+function closeSheet(){document.getElementById('overlay').style.display='none';S.selShip=null;}
+function tel(p){if(p)window.open('tel:'+p);}
+function wa(p){if(p)window.open('https://wa.me/'+p.replace(/\D/g,''),'_blank');}
+
+// =====================================================================
+// SHIPPING PICKER
+// =====================================================================
+function pickShip(id,color){
+  S.selShip=id;
+  document.querySelectorAll('.ship-btn').forEach(b=>{b.classList.remove('picked');b.style.background='';b.style.color='';});
+  if(!id) return;
+  const btn=document.getElementById('sb-'+id);
+  if(btn){btn.classList.add('picked');btn.style.background=color;btn.style.color='#fff';}
+  const allShips=getAllShips();
+  const co=allShips.find(x=>x.id===id);
+  const form=document.getElementById('ship-form');
+  if(!form||!co) return;
+  const saved=S.shipCos[id]||{};
+  const fields=co.fields||['api_key'];
+  form.innerHTML=`
+    <div class="ship-form-inner">
+      <div class="ship-form-title">${co.ico} إعدادات ${co.name}</div>
+      ${fields.map(f=>`
+        <div style="margin-bottom:9px">
+          <div class="ef-lbl">${f}</div>
+          <input class="inp inp-sm" id="sf-${f.replace(/[^a-z0-9]/gi,'_')}" value="${(saved[f]||'').replace(/"/g,'&quot;')}" placeholder="${f}" dir="ltr">
+        </div>`).join('')}
+      <button class="btn btn-ghost btn-xs btn-full" onclick="saveCo('${id}')">💾 حفظ مفاتيح ${co.name}</button>
+    </div>
+    <div class="send-form">
+      <div class="send-form-title">📋 بيانات الشحنة</div>
+      <div class="form-grid">
+        <div>
+          <div class="ef-lbl">نوع التوصيل</div>
+          <select class="sel" id="sf-stop-type">
+            <option value="A domicile">للعنوان</option>
+            <option value="Stop desk">Stop Desk</option>
+          </select>
+        </div>
+        <div>
+          <div class="ef-lbl">الوزن (كغ)</div>
+          <input class="inp inp-sm" id="sf-weight" type="number" step="0.1" min="0.1" placeholder="0.5" dir="ltr" value="0.5">
+        </div>
+        <div class="form-full">
+          <div class="ef-lbl">وصف المحتوى</div>
+          <input class="inp inp-sm" id="sf-desc" placeholder="وصف محتوى الطرد..." value="">
+        </div>
+        <div id="sf-stop-name-wrap" style="display:none" class="form-full">
+          <div class="ef-lbl">اسم Stop Desk</div>
+          <input class="inp inp-sm" id="sf-stop-name" placeholder="اسم نقطة الاستلام...">
+        </div>
+      </div>
+    </div>`;
+  // إظهار حقل Stop Desk عند الاختيار
+  document.getElementById('sf-stop-type').addEventListener('change',function(){
+    document.getElementById('sf-stop-name-wrap').style.display=this.value==='Stop desk'?'':'none';
+  });
+}
+
+function saveCo(id){
+  const allShips=getAllShips();
+  const co=allShips.find(x=>x.id===id);
+  if(!co) return;
+  const keys={};
+  (co.fields||['api_key']).forEach(f=>{
+    const el=document.getElementById('sf-'+f.replace(/[^a-z0-9]/gi,'_'));
+    keys[f]=el?.value||'';
+  });
+  S.shipCos[id]=keys;
+  saveCos();
+  toast('تم حفظ مفاتيح '+co.name,'ok');
+}
+
+// =====================================================================
+// SEND TO SHIPPING COMPANY
+// =====================================================================
+async function doSendShip(orderId){
+  if(!S.selShip){toast('اختر شركة التوصيل أولاً','warn');return;}
+  const allShips=getAllShips();
+  const co=allShips.find(x=>x.id===S.selShip);
+  const o=S.orders.find(x=>x.id===orderId);
+  if(!o){toast('لم يُعثر على الطلبية','err');return;}
+
+  const stopType = document.getElementById('sf-stop-type')?.value||'A domicile';
+  const weight   = document.getElementById('sf-weight')?.value||0.5;
+  const desc     = document.getElementById('sf-desc')?.value||'';
+  const stopName = document.getElementById('sf-stop-name')?.value||'';
+
+  try{
+    const data = {
+      nom:o.nom||'', tel:o.tel||'', wilaya:o.wilaya||'',
+      commune:o.commune||o.adresse||'', adresse:o.adresse||o.commune||'',
+      produit:o.produit||'', montant:o.montant||0,
+      quantite:o.quantite||1, poids:weight||o.poids||0.5,
+      description:desc, stopdesk:stopType, nom_stop:stopName
+    };
+    const flatData = Object.fromEntries(Object.entries(data).map(([k,v])=>['data['+k+']',v]));
+    await erpAjax('smart_shipping_send_order',{order_id:orderId, company:S.selShip, ...flatData});
+    toast('تم الإرسال إلى '+co?.name+' ✅','ok');
+    closeSheet();
+    loadOrders(S.page);
+  }catch(e){
+    toast('فشل الإرسال: '+e.message,'err');
+  }
+}
+
+// =====================================================================
+// CHANGE STATUS
+// =====================================================================
+async function chStat(orderId,status){
+  try{
+    try{
+      await erpAjax('smart_shipping_change_status',{order_id:orderId, new_status:status});
+    }catch(pluginErr){
+      const wcStatus = erpToWcStatus(status);
+      await wcPut('/orders/'+orderId,{status:wcStatus});
+    }
+    toast('تم تغيير الحالة ✅','ok');
+    closeSheet();
+    loadOrders(S.page);
+    fetchStatusCounts().then(()=>buildStrip());
+  }catch(e){
+    toast('فشل تغيير الحالة: '+e.message,'err');
+  }
+}
+
+// =====================================================================
+// SAVE ORDER FIELD
+// =====================================================================
+async function saveField(orderId,field){
+  let body={};
+  if(field==='name'){
+    const v=(document.getElementById('ef-name')?.value||'').trim();
+    const parts=v.split(' ');
+    body={billing:{first_name:parts[0]||'',last_name:parts.slice(1).join(' ')||''},
+          shipping:{first_name:parts[0]||'',last_name:parts.slice(1).join(' ')||''}};
+  } else if(field==='phone'){
+    body={billing:{phone:document.getElementById('ef-phone')?.value||''}};
+  } else if(field==='wilaya'){
+    const v=document.getElementById('ef-wilaya')?.value||'';
+    body={billing:{state:v},shipping:{state:v}};
+  } else if(field==='addr'){
+    const v=document.getElementById('ef-addr')?.value||'';
+    body={shipping:{address_1:v,city:v},billing:{address_1:v,city:v}};
+  } else if(field==='adresse'){
+    const v=document.getElementById('ef-adresse')?.value||'';
+    body={shipping:{address_2:v},billing:{address_2:v}};
+  } else if(field==='poids'){
+    const v=document.getElementById('ef-poids')?.value||'0.5';
+    // حفظ الوزن كـ meta_data
+    body={meta_data:[{key:'weight',value:v}]};
+  }
+  try{
+    await wcPut('/orders/'+orderId,body);
+    // تحديث الكاش المحلي
+    const idx=S.orders.findIndex(x=>x.id===orderId);
+    if(idx>=0){
+      if(field==='wilaya') S.orders[idx].wilaya=document.getElementById('ef-wilaya')?.value||'';
+      if(field==='phone')  S.orders[idx].tel=document.getElementById('ef-phone')?.value||'';
+      if(field==='name')   S.orders[idx].nom=document.getElementById('ef-name')?.value||'';
+      if(field==='addr')   S.orders[idx].commune=document.getElementById('ef-addr')?.value||'';
+      if(field==='adresse')S.orders[idx].adresse=document.getElementById('ef-adresse')?.value||'';
+      if(field==='poids')  S.orders[idx].poids=document.getElementById('ef-poids')?.value||'0.5';
+    }
+    toast('تم الحفظ ✅','ok');
+  }catch(e){
+    toast('فشل الحفظ: '+e.message,'err');
+  }
+}
+
+// =====================================================================
+// SAVE NOTE
+// =====================================================================
+async function saveNote(orderId){
+  const note=(document.getElementById('note-inp')?.value||'').trim();
+  if(!note){toast('اكتب ملاحظة أولاً','warn');return;}
+  try{
+    await wcPost('/orders/'+orderId+'/notes',{note});
+    document.getElementById('note-inp').value='';
+    toast('تمت إضافة الملاحظة ✅','ok');
+  }catch(e){toast('فشل إضافة الملاحظة','err');}
+}
+
+// =====================================================================
+// FINANCE
+// =====================================================================
+async function loadFinance(){
+  const body=document.getElementById('fin-body');
+  body.innerHTML='<div class="loading-center"><div class="spin"></div><div class="loading-txt">جاري تحميل الإحصائيات...</div></div>';
+  const now=new Date();
+  let after;
+  if(S.finPeriod==='today') after=new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  else if(S.finPeriod==='week') after=new Date(now-7*86400000).toISOString();
+  else after=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  try{
+    const[comp,canc,ret,pend]=await Promise.all([
+      wcGet('/orders',{status:'completed',per_page:100,after}),
+      wcGet('/orders',{status:'cancelled',per_page:100,after}),
+      wcGet('/orders',{status:'refunded',per_page:100,after}),
+      wcGet('/orders',{status:'pending,processing,on-hold',per_page:100,after})
+    ]);
+    const sum=arr=>arr.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const cur=comp.data[0]?.currency_symbol||'DA';
+    const fmt=n=>Math.round(n).toLocaleString('fr-DZ');
+    const counts=S.statusCounts;
+    body.innerHTML=`
+      <div class="big-card" style="background:linear-gradient(135deg,#059669,#047857)">
+        <div class="bc-lbl">💰 الإيرادات المحققة</div>
+        <span class="bc-val">${fmt(sum(comp.data))} ${cur}</span>
+        <div class="bc-sub">${comp.total} طلب مكتمل</div>
+      </div>
+      <div class="big-card" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+        <div class="bc-lbl">⏳ الإيرادات المتوقعة</div>
+        <span class="bc-val">${fmt(sum(pend.data))} ${cur}</span>
+        <div class="bc-sub">${pend.total} طلب قيد المعالجة</div>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sc-ico" style="background:#d1fae5">✅</div><div class="sc-lbl">مكتمل</div><div class="sc-val" style="color:#059669">${counts.delivered||comp.total}</div></div>
+        <div class="sc"><div class="sc-ico" style="background:#dbeafe">📊</div><div class="sc-lbl">مؤكد</div><div class="sc-val" style="color:#1d4ed8">${counts.confirmed||0}</div></div>
+        <div class="sc"><div class="sc-ico" style="background:#ede9fe">🚚</div><div class="sc-lbl">في الطريق</div><div class="sc-val" style="color:#7c3aed">${counts.on_the_way||0}</div></div>
+        <div class="sc"><div class="sc-ico" style="background:#fef3c7">⏳</div><div class="sc-lbl">معلق</div><div class="sc-val" style="color:#d97706">${counts.pending||pend.total}</div></div>
+        <div class="sc"><div class="sc-ico" style="background:#f1f5f9">❌</div><div class="sc-lbl">ملغي</div><div class="sc-val" style="color:#64748b">${counts.cancelled||canc.total}</div></div>
+        <div class="sc"><div class="sc-ico" style="background:#e0e7ff">🔄</div><div class="sc-lbl">مرتجع</div><div class="sc-val" style="color:#4338ca">${counts.returned||ret.total}</div></div>
+      </div>`;
+  }catch(e){
+    body.innerHTML=`<div class="empty"><span class="empty-ico">⚠️</span><span class="empty-txt">${e.message}</span></div>`;
+  }
+}
+
+function setFin(period,btn){
+  S.finPeriod=period;
+  document.querySelectorAll('.prbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const lbls={today:'اليوم',week:'آخر 7 أيام',month:'هذا الشهر'};
+  document.getElementById('fin-sub-lbl').textContent=lbls[period];
+  loadFinance();
+}
+
+// =====================================================================
+// STOCK
+// =====================================================================
+async function loadStock(){
+  const list=document.getElementById('sklist');
+  list.innerHTML='<div class="loading-center"><div class="spin"></div><div class="loading-txt">جاري تحميل المنتجات...</div></div>';
+  try{
+    const{data,total}=await wcGet('/products',{per_page:50,search:S.skQ||undefined});
+    S.products=data;
+    document.getElementById('sk-sub').textContent=total+' منتج';
+    list.innerHTML=data.length?data.map(p=>skCardHTML(p)).join(''):
+      `<div class="empty"><span class="empty-ico">📦</span><span class="empty-txt">لا منتجات</span></div>`;
+  }catch(e){
+    list.innerHTML=`<div class="empty"><span class="empty-ico">⚠️</span><span class="empty-txt">${e.message}</span></div>`;
+  }
+}
+
+function skCardHTML(p){
+  const q=p.stock_quantity;
+  const isOut=q===0||q===null, isLow=!isOut&&q<=5;
+  const badgeBg=isOut?'#fee2e2':isLow?'#fef3c7':'#d1fae5';
+  const badgeC=isOut?'#dc2626':isLow?'#d97706':'#059669';
+  const badgeTxt=isOut?'نفد المخزون':isLow?'⚠️ '+q:String(q??'—');
+  return `<div class="skcard">
+    <div class="sk-thumb">🛍️</div>
+    <div class="sk-info">
+      <div class="sk-name">${p.name}</div>
+      <div class="sk-sku">SKU: ${p.sku||'—'} · ${p.price||0} ${p.currency||'DA'}</div>
+      <div id="ske-${p.id}" class="sk-edit" style="display:none">
+        <input class="sk-input" id="skv-${p.id}" type="number" min="0" value="${q||0}">
+        <button class="btn btn-blue btn-xs" onclick="saveStock(${p.id})">💾</button>
+        <button class="btn btn-ghost btn-xs" onclick="cancelSk(${p.id})">✕</button>
+      </div>
+    </div>
+    <div onclick="startSk(${p.id},${q||0})" style="cursor:pointer">
+      <div class="sk-badge" id="skb-${p.id}" style="background:${badgeBg};color:${badgeC}">${badgeTxt}</div>
+    </div>
+  </div>`;
+}
+
+function startSk(id,v){
+  const e=document.getElementById('ske-'+id);
+  e.style.display='flex';
+  const i=document.getElementById('skv-'+id);
+  i.value=v; i.focus();
+}
+function cancelSk(id){document.getElementById('ske-'+id).style.display='none';}
+
+async function saveStock(id){
+  const v=parseInt(document.getElementById('skv-'+id)?.value);
+  if(isNaN(v)||v<0){toast('كمية غير صالحة','err');return;}
+  try{
+    await wcPut('/products/'+id,{stock_quantity:v,manage_stock:true});
+    const isOut=v===0, isLow=!isOut&&v<=5;
+    const b=document.getElementById('skb-'+id);
+    b.style.background=isOut?'#fee2e2':isLow?'#fef3c7':'#d1fae5';
+    b.style.color=isOut?'#dc2626':isLow?'#d97706':'#059669';
+    b.textContent=isOut?'نفد المخزون':isLow?'⚠️ '+v:String(v);
+    cancelSk(id);
+    toast('تم تحديث المخزون ✅','ok');
+  }catch(e){toast('فشل التحديث: '+e.message,'err');}
+}
+
+let skTimer=null;
+function onSkSearch(v){S.skQ=v;clearTimeout(skTimer);skTimer=setTimeout(loadStock,500);}
+
+// =====================================================================
+// SETTINGS
+// =====================================================================
+function buildSettings(){
+  const body=document.getElementById('set-body');
+  if(!body) return;
+  const modeLabel=S.mode==='ck'?'Consumer Key':'App Password';
+  const connUser=S.mode==='ck'?S.ck.substring(0,12)+'...':S.user;
+  const allShips=getAllShips();
+
+  const pluginStatus = S.nonce
+    ? '<span style="color:#059669">✅ الإضافة Smart Service ERP مفعّلة</span>'
+    : '<span style="color:#d97706">⚠️ الإضافة غير مفعّلة — سيتم استخدام WC REST API مباشرة</span>';
+
+  body.innerHTML=`
+    <div class="set-sec">
+      <div class="set-title">الحساب المتصل</div>
+      <div class="set-row"><span class="set-lbl">🌐 الموقع</span><span class="set-val" dir="ltr">${S.url}</span></div>
+      <div class="set-row"><span class="set-lbl">👤 المستخدم</span><span class="set-val">${connUser}</span></div>
+      <div class="set-row"><span class="set-lbl">🔐 نوع الاتصال</span><span class="set-val" style="color:var(--green)">${modeLabel}</span></div>
+      <div class="set-row"><span class="set-lbl">🔌 حالة الإضافة</span><span class="set-val" style="font-size:11px">${pluginStatus}</span></div>
+      <div class="set-row"><span class="set-lbl">📶 الاتصال</span><span class="conn-badge" style="background:#d1fae5;color:#059669">✅ متصل</span></div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:8px;margin-top:10px" onclick="refreshAll()">🔄 تحديث البيانات</button>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:8px;background:#fef3c7;border-color:#d97706;color:#92400e" onclick="runDiag()">🔍 تشخيص الاتصال</button>
+      <button class="btn btn-red btn-full" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-title">🚚 شركات التوصيل — مفاتيح API</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">
+        الشركات الثابتة (ZR Express + Noest) بالإضافة إلى ${S.pluginShips.length} شركة مخصصة من الإضافة.<br>
+        أدخل مفاتيح API لكل شركة لتفعيل الإرسال التلقائي.
+      </p>
+      ${allShips.map(co=>{
+        const saved=S.shipCos[co.id]||{};
+        const conf=Object.values(saved).some(v=>v);
+        return `<div class="co-card">
+          <button class="co-hd" onclick="togCo('${co.id}')">
+            <div class="co-left">
+              <span class="co-ico">${co.ico}</span>
+              <div>
+                <div class="co-name">${co.name}${co.isCustom?' <span style="font-size:10px;color:var(--blue);background:var(--blue-light);padding:1px 5px;border-radius:4px">مخصص</span>':''}</div>
+                <span class="co-st" style="color:${conf?'#059669':'#94a3b8'}">${conf?'✅ مُهيأ':'⚪ غير مُهيأ'}</span>
+              </div>
+            </div>
+            <span style="color:var(--text3);font-size:13px" id="coarr-${co.id}">▼</span>
+          </button>
+          <div id="cof-${co.id}" style="display:none">
+            <div class="co-fields">
+              ${(co.fields||['api_key']).map(f=>`
+                <div>
+                  <div class="ef-lbl">${f}</div>
+                  <input class="inp inp-sm" id="cok-${co.id}-${f.replace(/[^a-z0-9]/gi,'_')}" value="${(saved[f]||'').replace(/"/g,'&quot;')}" placeholder="${f}" dir="ltr">
+                </div>`).join('')}
+              <button class="btn btn-blue btn-sm btn-full" onclick="saveCoSet('${co.id}')">💾 حفظ مفاتيح ${co.name}</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="set-sec" style="border-bottom:none">
+      <div class="app-card">
+        <div class="app-logo">⚡</div>
+        <div class="app-name">Smart ERP Pro</div>
+        <div class="app-ver">الإصدار 3.3 · متوافق مع Smart Service ERP v9</div>
+        <div class="app-desc">
+          تطبيق إدارة الطلبيات الذكية<br>
+          يستخدم <strong>conf_status</strong> — مطابق 100٪ للإضافة<br>
+          AJAX الإضافة + Fallback لـ WC REST API<br>
+          Proxy آمن عبر Netlify Functions
+        </div>
+      </div>
+    </div>`;
+}
+
+function togCo(id){
+  const el=document.getElementById('cof-'+id), ar=document.getElementById('coarr-'+id);
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  ar.textContent=open?'▼':'▲';
+}
+
+function saveCoSet(id){
+  const allShips=getAllShips();
+  const co=allShips.find(x=>x.id===id);
+  if(!co) return;
+  const keys={};
+  (co.fields||['api_key']).forEach(f=>{
+    const el=document.getElementById('cok-'+id+'-'+f.replace(/[^a-z0-9]/gi,'_'));
+    keys[f]=el?.value||'';
+  });
+  S.shipCos[id]=keys;
+  saveCos();
+  toast('تم حفظ مفاتيح '+co.name+' ✅','ok');
+  buildSettings();
+}
+
+async function refreshAll(){
+  toast('جاري التحديث...','ok');
+  await fetchNonce();
+  await Promise.all([fetchPluginShips(), fetchStatusCounts()]);
+  buildStrip();
+  buildSettings();
+  loadOrders();
+}
+
+function doLogout(){
+  if(!confirm('هل تريد تسجيل الخروج؟')) return;
+  localStorage.removeItem('erp_v33');
+  localStorage.removeItem('erp_v32');
+  Object.assign(S,{url:'',user:'',pass:'',ck:'',cs:'',mode:'basic',orders:[],products:[],nonce:'',statusCounts:{},pluginShips:[],tab:'management'});
+  document.getElementById('s-main').classList.remove('on');
+  const l=document.getElementById('s-login');
+  l.classList.add('on');
+  setAuthMode('basic');
+  ['in-url','in-user','in-pass','in-ck','in-cs'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e) e.value='';
+  });
+  toast('تم تسجيل الخروج','ok');
+}
+
+// =====================================================================
+// INIT — ننتظر DOM جاهز قبل أي شيء
+// =====================================================================
+function initApp(){
+  // URL PARAMS (deep link من الإضافة)
+  (function handleUrlParams(){
+    const p=new URLSearchParams(window.location.search);
+    const key=p.get('key')||p.get('ck');
+    const secret=p.get('secret')||p.get('cs');
+    const url=p.get('url')||p.get('site');
+    if(key&&secret){
+      S.mode='ck';
+      setAuthMode('ck');
+      if(url){const e=document.getElementById('in-url');if(e)e.value=decodeURIComponent(url);}
+      const eckEl=document.getElementById('in-ck');
+      const ecsEl=document.getElementById('in-cs');
+      if(eckEl) eckEl.value=decodeURIComponent(key);
+      if(ecsEl) ecsEl.value=decodeURIComponent(secret);
+    }
+  })();
+
+  // AUTO LOGIN
+  loadCos();
+  const loginScreen = document.getElementById('s-login');
+  const mainScreen  = document.getElementById('s-main');
+
+  if(!loginScreen || !mainScreen){
+    // الـ DOM لم يكتمل بعد — أعد المحاولة
+    setTimeout(initApp, 50);
+    return;
+  }
+
+  // أضف class يدل على أن JS جاهز → CSS يتوقف عن إظهار login تلقائياً
+  document.body.classList.add('app-ready');
+
+  if(load()&&S.url&&(S.user||S.ck)){
+    setAuthMode(S.mode||'basic');
+    loginScreen.style.display='none';
+    mainScreen.classList.add('on');
+    setTimeout(async()=>{
+      buildStrip();
+      await fetchNonce();
+      await Promise.all([fetchPluginShips(), fetchStatusCounts()]);
+      buildStrip();
+      buildSettings();
+      loadOrders();
+    }, 60);
+  } else {
+    loginScreen.style.display='';
+    loginScreen.classList.add('on');
+  }
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>
