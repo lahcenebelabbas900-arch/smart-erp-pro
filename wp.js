@@ -22,31 +22,32 @@ module.exports = async (req, res) => {
 
   if (!site) {
     Object.entries(CORS).forEach(([k,v]) => res.setHeader(k, v));
+    res.setHeader('Content-Type','application/json');
     return res.status(400).json({ error: 'x-wp-site header missing' });
   }
 
-  // ✅ استخراج المسار الصحيح من query param _path (يُضاف من vercel.json rewrite)
+  // ✅ استخراج المسار من query param _path (يُمرَّر من vercel.json rewrite)
   let reqUrl;
   try { reqUrl = new URL(req.url, 'http://localhost'); } catch(e) { reqUrl = new URL('/', 'http://localhost'); }
 
-  // المسار الحقيقي = _path param (مثال: wp-admin/admin-ajax.php?action=xxx)
-  // أو req.url بعد حذف /api/wp
+  // المسار الحقيقي من _path مثلاً: wp-admin/admin-ajax.php
   let rawPath = reqUrl.searchParams.get('_path') || '';
   if (rawPath && !rawPath.startsWith('/')) rawPath = '/' + rawPath;
 
-  // إعادة بناء query string بدون _path
+  // ما تبقى من query string بعد حذف _path
   reqUrl.searchParams.delete('_path');
-  const qs = reqUrl.search || '';   // ما تبقى من query params
+  const qs = reqUrl.search || '';
 
   const target = site + (rawPath || '/') + qs;
 
-  // بناء headers
+  // بناء headers الطلب
   const reqH = {
     'Accept'    : 'application/json',
     'User-Agent': 'Mozilla/5.0 VercelProxy/1.0',
   };
   try { reqH['Host'] = new URL(site).hostname; } catch(e) {}
-  if (h['authorization'])  reqH['Authorization']  = h['authorization'];
+
+  if (h['authorization'])  reqH['Authorization'] = h['authorization'];
   reqH['Content-Type'] = h['content-type'] || 'application/x-www-form-urlencoded';
 
   // قراءة body
@@ -81,9 +82,9 @@ module.exports = async (req, res) => {
           const ct2  = proxyRes.headers['content-type'] || 'application/json';
           Object.entries(CORS).forEach(([k,v]) => res.setHeader(k, v));
           res.setHeader('Content-Type', ct2);
-          ['x-wp-total','x-wp-totalpages','x-wp-nonce'].forEach(h2 => {
-            if (proxyRes.headers[h2]) res.setHeader(h2, proxyRes.headers[h2]);
-          });
+          if (proxyRes.headers['x-wp-total'])      res.setHeader('x-wp-total',      proxyRes.headers['x-wp-total']);
+          if (proxyRes.headers['x-wp-totalpages']) res.setHeader('x-wp-totalpages', proxyRes.headers['x-wp-totalpages']);
+          if (proxyRes.headers['x-wp-nonce'])      res.setHeader('x-wp-nonce',      proxyRes.headers['x-wp-nonce']);
           res.status(proxyRes.statusCode).end(body);
           resolve();
         });
