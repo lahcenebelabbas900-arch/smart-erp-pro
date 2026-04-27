@@ -788,88 +788,160 @@ async function doLogin(){
   const prevUrl = S.url;
   S.url = raw;
 
-  // ✅ btoa آمن يدعم كل الأحرف بما فيها العربية والرموز الخاصة
+  // ✅ btoa آمن يدعم كل الأحرف بما فيها الرموز الخاصة
   let auth;
-  try {
-    auth = 'Basic ' + btoa(unescape(encodeURIComponent(u + ':' + p)));
-  } catch(e) {
-    auth = 'Basic ' + btoa(u + ':' + p);
-  }
-  const isLocal = location.hostname==='localhost'||location.protocol==='file:';
+  try { auth = 'Basic ' + btoa(unescape(encodeURIComponent(u + ':' + p))); }
+  catch(e) { auth = 'Basic ' + btoa(u + ':' + p); }
 
-  // ===== خطوة 1: حاول ERP AJAX (الإضافة) أولاً =====
-  let erpOk = false;
-  try{
-    const erpUrl = '/api/wp/wp-admin/admin-ajax.php';
-    const erpR = await fetch(erpUrl, {
-      method:'POST',
-      headers:{Authorization:auth,'Content-Type':'application/x-www-form-urlencoded','x-wp-site':raw},
-      body:'action=smart_get_nonce_for_app',
-      signal: AbortSignal.timeout(10000)
-    });
-    const erpTxt = await erpR.text();
-    // إذا رجع JSON (حتى لو success: false) فمعناه الإضافة موجودة والاتصال يعمل
-    if(!erpTxt.trim().startsWith('<')){
-      try{JSON.parse(erpTxt); erpOk=true;}catch(e){}
-    }
-    // إذا 401 من ERP = بيانات خاطئة
-    if(erpR.status===401 || erpR.status===403){
-      toast('بيانات الدخول غير صحيحة ('+erpR.status+')','err');
-      S.url=prevUrl; btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false; return;
-    }
-  }catch(e){}
+  const PROXY = '/api/wp';
+  const siteH = { 'x-wp-site': raw };
 
-  // ===== خطوة 2: إذا نجح ERP — دخول مباشر =====
-  if(erpOk){
+  function saveAndLaunch(msg, type='ok'){
     if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
     else{S.ck=u;S.cs=p;S.user='';S.pass='';}
     save(); loadCos();
-    toast('تم الاتصال عبر الإضافة 🎉','ok');
+    toast(msg, type);
     btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
-    setTimeout(launchApp,400); return;
+    setTimeout(launchApp, 400);
   }
 
-  // ===== خطوة 3: Fallback — جرّب WC REST API مباشرة =====
+  function loginFail(msg){
+    S.url = prevUrl;
+    toast(msg, 'err');
+    btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
+  }
+
+  // ================================================================
+  // خطوة 1: اختبر اتصال Proxy نفسه أولاً
+  // ================================================================
   try{
-    const testPath = '/wp-json/wc/v3/orders?per_page=1';
-    const testUrl = '/api/wp'+testPath;
-    const r = await fetch(testUrl, {
-      headers:{Authorization:auth,'Content-Type':'application/json','x-wp-site':raw},
-      signal: AbortSignal.timeout(12000)
+    const pingR = await fetch(PROXY+'/wp-json/', {
+      headers:{ ...siteH, 'Authorization': auth },
+      signal: AbortSignal.timeout(8000)
     });
-    if(r.ok || r.status===200){
-      if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
-      else{S.ck=u;S.cs=p;S.user='';S.pass='';}
-      save(); loadCos();
-      toast('تم الاتصال بنجاح 🎉','ok');
-      btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
-      setTimeout(launchApp,400); return;
-    } else if(r.status===401){
-      toast('بيانات الدخول غير صحيحة (401)','err');
-    } else if(r.status===404){
-      // WC REST غير مفعّل لكن ربما الموقع يعمل — ادخل وأظهر الطلبيات من AJAX
-      if(S.mode==='basic'){S.user=u;S.pass=p;S.ck='';S.cs='';}
-      else{S.ck=u;S.cs=p;S.user='';S.pass='';}
-      save(); loadCos();
-      toast('تم الاتصال — WC REST API غير مفعّل، يعمل بوضع الإضافة','warn');
-      btn.innerHTML='🔐 تسجيل الدخول'; btn.disabled=false;
-      setTimeout(launchApp,400); return;
-    } else {
-      let errTxt = 'خطأ من الخادم: '+r.status;
-      try{const j=await r.json();if(j.error)errTxt=j.error;}catch(e){}
-      toast(errTxt,'err');
+    // إذا الـ proxy أرجع خطأ "x-wp-site missing" فالمشكلة في الـ proxy نفسه
+    if(pingR.status===400){
+      const j = await pingR.json().catch(()=>({}));
+      if(j.error && j.error.includes('x-wp-site')){
+        loginFail('خطأ في إعداد الـ Proxy — تأكد من رفع api/wp.js على Vercel');
+        return;
+      }
     }
   }catch(e){
-    // إذا فشل كل شيء بسبب شبكة — ادخل على أي حال إذا أُدخلت بيانات
-    if(e.name==='AbortError'){
-      toast('انتهت مهلة الاتصال','err');
-    } else {
-      toast('تعذّر الاتصال — تحقق من الرابط','err');
+    // إذا فشل الـ ping تماماً = مشكلة شبكة أو الـ proxy غير موجود
+    if(e.name==='AbortError' || e.name==='TypeError'){
+      // لا نوقف الدخول هنا — نكمل للخطوة التالية
     }
   }
-  S.url = prevUrl;
-  btn.innerHTML='🔐 تسجيل الدخول';
-  btn.disabled=false;
+
+  // ================================================================
+  // خطوة 2: اختبر WP JSON index (بدون auth) — للتحقق من وصول الموقع
+  // ================================================================
+  let siteReachable = false;
+  try{
+    const wpR = await fetch(PROXY+'/wp-json/', {
+      headers: siteH,
+      signal: AbortSignal.timeout(10000)
+    });
+    // أي رد من الخادم (حتى 401) يعني الموقع وصول
+    if(wpR.status < 600) siteReachable = true;
+  }catch(e){}
+
+  if(!siteReachable){
+    loginFail('تعذّر الوصول إلى الموقع — تحقق من الرابط وتأكد من رفع api/wp.js');
+    return;
+  }
+
+  // ================================================================
+  // خطوة 3: جرّب ERP AJAX الإضافة
+  // ================================================================
+  let erpOk = false;
+  let erpStatus = 0;
+  try{
+    const erpR = await fetch(PROXY+'/wp-admin/admin-ajax.php', {
+      method:'POST',
+      headers:{ Authorization:auth, 'Content-Type':'application/x-www-form-urlencoded', ...siteH },
+      body:'action=smart_get_nonce_for_app',
+      signal: AbortSignal.timeout(12000)
+    });
+    erpStatus = erpR.status;
+    const erpTxt = await erpR.text();
+    // ✅ إذا رجع JSON (حتى success:false) فالاتصال يعمل والإضافة موجودة
+    if(!erpTxt.trim().startsWith('<') && erpStatus !== 401 && erpStatus !== 403){
+      try{ JSON.parse(erpTxt); erpOk = true; }catch(e){}
+    }
+  }catch(e){}
+
+  if(erpOk){
+    saveAndLaunch('تم الاتصال عبر الإضافة 🎉');
+    return;
+  }
+
+  // ================================================================
+  // خطوة 4: Fallback — WC REST API
+  // ================================================================
+  let wcStatus = 0;
+  try{
+    // أضف CK/CS في URL إذا كان الوضع ck (أضمن مع بعض إعدادات الخادم)
+    let wcUrl = PROXY+'/wp-json/wc/v3/orders?per_page=1';
+    if(S.mode==='ck' && u && p){
+      wcUrl += '&consumer_key='+encodeURIComponent(u)+'&consumer_secret='+encodeURIComponent(p);
+    }
+    const wcR = await fetch(wcUrl, {
+      headers:{ Authorization:auth, 'Content-Type':'application/json', ...siteH },
+      signal: AbortSignal.timeout(15000)
+    });
+    wcStatus = wcR.status;
+
+    if(wcR.ok){
+      saveAndLaunch('تم الاتصال بنجاح ✅');
+      return;
+    }
+
+    // ✅ إذا 401 مع basic auth — قد يكون Authorization header محجوب من Apache
+    // نجرب بدون header ونعتمد على CK في URL فقط
+    if(wcStatus === 401 && S.mode === 'ck'){
+      const wcR2 = await fetch(wcUrl, {
+        headers: siteH, // بدون Authorization header
+        signal: AbortSignal.timeout(10000)
+      });
+      if(wcR2.ok){
+        saveAndLaunch('تم الاتصال (Consumer Key) ✅');
+        return;
+      }
+    }
+
+    if(wcStatus === 401 || erpStatus === 401){
+      loginFail('بيانات الدخول غير صحيحة — تحقق من اسم المستخدم وكلمة مرور التطبيق');
+      return;
+    }
+
+    if(wcStatus === 403){
+      loginFail('ليس لديك صلاحية — تأكد من أذونات المستخدم في WordPress');
+      return;
+    }
+
+    if(wcStatus === 404){
+      // WC REST غير مفعّل — ادخل بوضع AJAX فقط
+      saveAndLaunch('تم الاتصال — WC REST غير مفعّل، يعمل بوضع الإضافة ⚠️', 'warn');
+      return;
+    }
+
+    // أي حالة أخرى — دعه يدخل ويحاول
+    if(wcStatus >= 200 && wcStatus < 500){
+      saveAndLaunch('تم الاتصال ('+wcStatus+') ✅');
+      return;
+    }
+
+    loginFail('خطأ من الخادم: '+wcStatus+' — تحقق من إعدادات WordPress');
+
+  }catch(e){
+    if(e.name==='AbortError'){
+      loginFail('انتهت مهلة الاتصال — الموقع بطيء أو محجوب');
+    } else {
+      loginFail('خطأ في الشبكة: '+e.message);
+    }
+  }
 }
 
 document.addEventListener('keydown',e=>{
