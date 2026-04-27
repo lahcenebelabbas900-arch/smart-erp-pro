@@ -1,7 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/wp/(.*)", "destination": "/api/wp?_path=$1" },
-    { "source": "/api/wp",      "destination": "/api/wp" }
+    { "source": "/api/wp/:path*", "destination": "/api/wp?_path=:path*" }
   ],
   "headers": [
     {
